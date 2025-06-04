@@ -1,85 +1,53 @@
-<script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white flex flex-col items-center p-6 md:p-12">
+    <header class="text-center mb-10">
+      <h1 class="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+        AI Image Predictor
+      </h1>
+      <p class="mt-2 text-gray-400">Загрузи изображение и узнай, что на нём!</p>
+    </header>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+    <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
+      <ImageUploader @image-selected="handleImageUpload" />
+      <PredictionResult :result="predictionResult" :isLoading="isPredicting" />
+    </main>
 
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
-
-  <RouterView />
+    <footer class="mt-12 w-full max-w-4xl">
+      <GPUInfo />
+    </footer>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
+<script setup>
+import {ref} from 'vue'
+import ImageUploader from '@/views/ImageUploader.vue'
+import PredictionResult from '@/views/PredictionResult.vue'
+import GPUInfo from '@/views/GPUInfo.vue'
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
+const predictionResult = ref(null)
+const isPredicting = ref(false)
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
+const handleImageUpload = async (file) => {
+  predictionResult.value = null
+  isPredicting.value = true
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
+  const formData = new FormData()
+  formData.append('image', file)
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
+  try {
+    // Предположим, у нас есть API /predict на локальном сервере
+    const response = await fetch('http://localhost:5000/predict', {
+      method: 'POST',
+      body: formData,
+    })
 
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
+    const result = await response.json()
+    predictionResult.value = result
+  } catch (error) {
+    alert('Ошибка при отправке изображения')
+    console.error(error)
+  } finally {
+    isPredicting.value = false
   }
 }
-</style>
+</script>
